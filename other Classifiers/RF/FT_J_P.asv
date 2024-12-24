@@ -1,0 +1,126 @@
+%Jake knife test code
+
+clc;
+close all;
+clear all;
+addpath libsvm-mat-2.88-1;
+
+load anticancer_alterate_CTriad;
+%****************************************
+  
+Result=0;
+y=[];
+Accuracy=0;
+result=50;
+Total_Seq_train=1597;
+DNA_labels=[];
+Total_correct=0;
+  c1=0; 
+  c2=0;
+ 
+  % Class labeling 
+ 
+  DNA_labels(1:225)=1;
+  DNA_labels(226:1597)=2;
+  %>>>>>>>>>>
+  fold=10;
+  single_fold = floor(Total_Seq_train/fold);
+test_total = single_fold * fold;
+remain = Total_Seq_train - test_total;
+
+aaa=anticancer_alterate_CTriad';
+Knn=2;
+for k=1:50
+  randperm_data=randperm(size(anticancer_alterate_CTriad',2));
+ ind=randperm_data;
+  feature1=aaa(:,ind);
+    permut_labels=DNA_labels(ind);
+      aa=find(permut_labels(1:1597)==1);
+      bb=find(permut_labels(1:1597)==2);
+    %cc=find(permut_labels(1:523)==3);
+    %dd=find(permut_labels(1:523)==4);
+
+
+ 
+    %+++++++++++++++++++++++++++++  train label
+     Yout=[];
+    Labelstem=[];
+    Samplestem=[];
+    Samplestem=feature1';
+    Labelstem= permut_labels';
+    m = single_fold;
+
+    l=1;
+    A = 1;
+        C = 0;
+
+        for T = 1:fold
+            C = C + 1;
+               T
+
+                if T == 1
+
+                Samples=Samplestem(A + single_fold:end,:)';
+
+                TestSample=Samplestem(1:single_fold,:)';
+
+                Labels=Labelstem(A + single_fold:end,:)';
+
+                TestLabel=Labelstem(1: single_fold,:)';
+                A = single_fold;
+
+                else
+                    if C == fold
+                        s11=Samplestem(1:A,: ); % Jackknifing 
+                        l11=Labelstem(1:A,: );
+
+                        Samples=s11';
+                        Labels=l11';
+
+                        TestSample=Samplestem(A + 1: end,:)';
+
+                        TestLabel=Labelstem(A + 1: end,:)'; 
+                    else
+                        s11=Samplestem(1:A,: ); % Jackknifing 
+                        l11=Labelstem(1:A,: );
+                        A = single_fold;
+                        A = T * A;
+                        s22=Samplestem((A+1):end,:);
+                        l22=Labelstem((A+1):end,:);
+
+
+                        Samples=[s11;s22]';
+                        Labels=[l11;l22]';
+
+                        TestSample=Samplestem((A - single_fold)+ 1: A,:)';
+
+                        TestLabel=Labelstem((A - single_fold)+ 1: A,:)';
+                    end  
+                extra_options.classwt=[55 45];
+       Sample=Samples';
+       Label=Labels';
+       TestSamples=TestSample';
+  tpred=classRF_train(Sample,Label,40,35,extra_options.classwt);
+  testpred=classRF_predict(TestSamples,tpred);
+    y(A)=testpred;   
+ 
+ 
+y2=y;
+   Result=find(y==DNA_labels);
+   Total_correct=size(Result,2);
+   Accuracy=(Total_correct/1597)*100
+    
+   
+   %+++++++++ individual Accuracy
+    for i=1:225
+        if( y(i)==-1)
+            c1=c1+1;
+        end
+    end
+    for i=226:1597
+        if( y(i)==1)
+            c2=c2+1;
+        end
+    end
+    
+    
